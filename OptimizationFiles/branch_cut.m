@@ -62,8 +62,11 @@ Aset.f = f;Aset.A = A;Aset.b = b;Aset.Aeq = Aeq;Aset.beq = beq;
 Aset.lb = lb;Aset.ub = ub;Aset.x0 = x0;Aset.b_F = 0;Aset.x_F=[];
 Aset.node = node_num;Aset.tree = tree;
 
+disp('=================================================================')
 while isempty(Aset)~=1 && ter_crit~=2
-    iter = iter + 1;
+    disp('-------------------------------------------------------------')
+    iter = iter + 1
+
     
     % Pick A subproblem 
     % Preference given to nodes with higher objective value
@@ -72,9 +75,13 @@ while isempty(Aset)~=1 && ter_crit~=2
         if Aset(ii).b_F >= Fsub
             Fsub_i = ii;
             Fsub = Aset(ii).b_F;
+            fprintf('choosing Fsub %d with b_F = %f\n', ii, Aset(ii).b_F)
         end
     end
-
+    
+    Aset(ii).A
+    Aset(ii).b'
+    
     %Solve subproblem
 
     % Using Linprog  
@@ -100,7 +107,13 @@ while isempty(Aset)~=1 && ter_crit~=2
         f_best_relax = Aset(Fsub_i).b_F;
     end
     
+    fprintf('eflag: %d,  b_f: %f,  U_best %f\n', Aset(Fsub_i).eflag, Aset(Fsub_i).b_F, U_best)
+    
     if ((Aset(Fsub_i).eflag >= 1) && (Aset(Fsub_i).b_F < U_best))
+%         disp('(Aset(Fsub_i).x_F(1:num_int)'); disp(Aset(Fsub_i).x_F(1:num_int))
+%         disp('round(Aset(Fsub_i).x_F(1:num_int))'); disp(round(Aset(Fsub_i).x_F(1:num_int)))
+%         disp('Aset(Fsub_i).x_F(1:num_int)-round(Aset(Fsub_i).x_F(1:num_int))'), disp((Aset(Fsub_i).x_F(1:num_int)-round(Aset(Fsub_i).x_F(1:num_int))))
+        disp('norm'); disp(norm(Aset(Fsub_i).x_F(1:num_int)-round(Aset(Fsub_i).x_F(1:num_int))))
         if norm(Aset(Fsub_i).x_F(1:num_int)-round(Aset(Fsub_i).x_F(1:num_int))) <= 1e-6    
             can_x = [can_x,Aset(Fsub_i).x_F]; 
             can_F = [can_F,Aset(Fsub_i).b_F];    
@@ -117,12 +130,12 @@ while isempty(Aset)~=1 && ter_crit~=2
         else % Cut and Branch
             
             % Apply cut to the subproblem
-            if Aset(Fsub_i).node~=1
-                [Aset(Fsub_i).A,Aset(Fsub_i).b] = ...
-                call_Cutplane(Aset(Fsub_i).x_F,Aset(Fsub_i).A,Aset(Fsub_i).b,...
-                Aset(Fsub_i).Aeq,Aset(Fsub_i).beq,ind_conCon,ind_intCon,...
-                indeq_conCon,indeq_intCon,num_int);
-            end    
+%             if Aset(Fsub_i).node~=1
+%                 [Aset(Fsub_i).A,Aset(Fsub_i).b] = ...
+%                 call_Cutplane(Aset(Fsub_i).x_F,Aset(Fsub_i).A,Aset(Fsub_i).b,...
+%                 Aset(Fsub_i).Aeq,Aset(Fsub_i).beq,ind_conCon,ind_intCon,...
+%                 indeq_conCon,indeq_intCon,num_int);
+%             end    
 
             %Branching
             [~,x_ind_maxfrac] = max(rem(abs(Aset(Fsub_i).x_F(1:num_int)),1));
@@ -153,6 +166,8 @@ while isempty(Aset)~=1 && ter_crit~=2
     else
         Aset(Fsub_i) = []; %Fathomed by infeasibility or bounds
     end
+    ter_crit
+    disp('Aset size:'); disp(size(Aset))    
 end
 
 if ter_crit>0
